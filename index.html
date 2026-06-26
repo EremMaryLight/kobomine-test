@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kobomine — Spend Intentionally</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,700;0,900;1,300&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        brand:      '#0B3D2E',
+        'brand-mid':'#145C44',
+        'brand-light':'#1A7A5C',
+        mint:       '#F1FDF4',
+        'mint-border':'#C8EDDA',
+        ink:        '#0B1F17',
+        muted:      '#5A7368',
+        gold:       '#C9A84C',
+        danger:     '#C0392B',
+      },
+      fontFamily: {
+        display: ['Fraunces', 'serif'],
+        sans:    ['Inter', 'sans-serif'],
+      },
+    },
+  },
+}
+</script>
+<style>
+  /* Animations & things Tailwind can't do inline */
+  html { scroll-behavior: smooth; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(1.3); }
+  }
+  .animate-pulse-dot { animation: pulse-dot 2s ease infinite; }
+
+  @keyframes drawLine { to { transform: scaleX(1); } }
+  .animate-draw::after {
+    content: '';
+    position: absolute;
+    bottom: 2px; left: 0; right: 0;
+    height: 4px;
+    background: #C9A84C;
+    border-radius: 2px;
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: drawLine 1s 0.6s ease forwards;
+  }
+
+  @keyframes float-up {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-12px); }
+  }
+  .animate-float { animation: float-up 4s ease-in-out infinite; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fadeup { animation: fadeUp 0.3s ease; }
+
+  /* Toggle switch knob transition */
+  .toggle-knob { transition: left 0.2s; }
+
+  /* Progress fill */
+  .progress-fill { transition: width 0.5s ease; }
+</style>
+</head>
+<body class="font-sans bg-white text-ink min-h-screen">
+
+<!-- ═══════════════════════════════════
+     PAGE SYSTEM — hidden by default
+═══════════════════════════════════ -->
+<style>
+  .page { display: none; min-height: 100vh; flex-direction: column; }
+  .page.active { display: flex; }
+</style>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     LANDING PAGE
+═══════════════════════════════════════════════════════ -->
+<div id="page-landing" class="page active">
+
+  <!-- NAV -->
+  <div x-data="{ open: false }">
+
+    <nav class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-[5vw] h-[68px] bg-white/90 backdrop-blur border-b border-mint-border">
+
+      <!-- Logo -->
+      <div class="font-display text-2xl font-black text-brand tracking-tight cursor-pointer" onclick="showPage('page-landing')">
+        Kobo<span class="text-brand-light">mine</span>
+      </div>
+
+      <!-- Desktop links (lg+) -->
+      <div class="hidden lg:flex items-center gap-8">
+        <a href="#features" class="text-muted text-sm font-medium hover:text-brand transition-colors no-underline">Features</a>
+        <a href="#how"      class="text-muted text-sm font-medium hover:text-brand transition-colors no-underline">How it works</a>
+        <a href="#pricing"  class="text-muted text-sm font-medium hover:text-brand transition-colors no-underline">Pricing</a>
+        <a href="#about"    class="text-muted text-sm font-medium hover:text-brand transition-colors no-underline">About</a>
+        <span class="text-muted text-sm font-medium hover:text-brand transition-colors cursor-pointer" onclick="showPage('page-login')">Sign in</span>
+        <button onclick="showPage('page-register')" class="bg-brand hover:bg-brand-mid text-white text-sm font-semibold px-5 py-2 rounded-md transition-colors cursor-pointer border-0">
+          Get started free
+        </button>
+      </div>
+
+      <!-- Mobile hamburger (below lg) -->
+      <button @click="open = true" class="lg:hidden text-brand text-xl p-2 cursor-pointer border-0 bg-transparent">
+        <i class="fas fa-bars"></i>
+      </button>
+
+    </nav>
+
+    <!-- Backdrop — outside nav so backdrop-blur doesn't bleed through -->
+    <div
+      x-show="open"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      @click="open = false"
+      class="fixed inset-0 bg-black/40 z-[60] lg:hidden"
+      style="display:none"
+    ></div>
+
+    <!-- Slide-in drawer — outside nav, solid white bg -->
+    <div
+      x-show="open"
+      x-transition:enter="transition ease-out duration-300 transform"
+      x-transition:enter-start="translate-x-full"
+      x-transition:enter-end="translate-x-0"
+      x-transition:leave="transition ease-in duration-200 transform"
+      x-transition:leave-start="translate-x-0"
+      x-transition:leave-end="translate-x-full"
+      class="fixed top-0 right-0 h-full w-72 z-[70] flex flex-col shadow-2xl lg:hidden"
+      style="display:none; background-color:#ffffff;"
+    >
+      <!-- Drawer header -->
+      <div class="flex items-center justify-between px-6 h-[68px] border-b border-mint-border">
+        <div class="font-display text-xl font-black text-brand tracking-tight">
+          Kobo<span class="text-brand-light">mine</span>
+        </div>
+        <button @click="open = false" class="text-muted hover:text-brand text-xl p-1 cursor-pointer border-0 bg-transparent">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Nav links -->
+      <div class="flex flex-col px-6 py-8 gap-6 flex-1">
+        <a href="#features" @click="open = false" class="text-ink text-base font-medium hover:text-brand transition-colors no-underline">Features</a>
+        <a href="#how"      @click="open = false" class="text-ink text-base font-medium hover:text-brand transition-colors no-underline">How it works</a>
+        <a href="#pricing"  @click="open = false" class="text-ink text-base font-medium hover:text-brand transition-colors no-underline">Pricing</a>
+        <a href="#about"    @click="open = false" class="text-ink text-base font-medium hover:text-brand transition-colors no-underline">About</a>
+      </div>
+
+      <!-- Auth buttons -->
+      <div class="flex flex-col gap-3 px-6 pb-8">
+        <button @click="showPage('page-login'); open = false" class="w-full bg-transparent text-brand border-[1.5px] border-mint-border hover:border-brand hover:bg-mint font-semibold px-6 py-3 rounded-lg text-sm transition-all cursor-pointer">
+          Sign in
+        </button>
+        <button @click="showPage('page-register'); open = false" class="w-full bg-brand hover:bg-brand-mid text-white font-semibold px-6 py-3 rounded-lg text-sm transition-all cursor-pointer border-0">
+          Get started free
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- HERO -->
+  <section class="pt-[68px] grid lg:grid-cols-2 min-h-screen items-center">
+
+    <!-- Left -->
+    <div class="px-[8vw] pr-[4vw] py-[5vw] flex flex-col gap-7">
+      <!-- Eyebrow -->
+      <div class="inline-flex items-center gap-2 bg-mint border border-mint-border rounded-full px-4 py-1.5 text-xs font-semibold text-brand tracking-widest uppercase w-fit">
+        <span class="w-2 h-2 rounded-full bg-brand-light animate-pulse-dot"></span>
+        Replace willpower
+with structure
+      </div>
+
+      <!-- Headline -->
+      <h1 class="font-display text-[clamp(2.8rem,4.5vw,4.2rem)] font-black leading-[1.05] tracking-[-0.04em] text-ink">
+        Stop losing money<br>
+        to <span class="text-brand italic relative animate-draw whitespace-nowrap">yourself</span>
+      </h1>
+
+      <p class="text-[1.05rem] text-muted leading-relaxed max-w-[440px]">
+        Kobomine replaces willpower with systems. Plan your income, protect what matters, and control what you spend — every single day.
+      </p>
+
+      <div class="flex gap-4 flex-wrap">
+        <button onclick="showPage('page-register')"
+          class="bg-brand hover:bg-brand-mid text-white font-semibold px-8 py-3.5 rounded-lg text-[0.9375rem] transition-all hover:-translate-y-px hover:shadow-lg border-0 cursor-pointer">
+          Start for free
+        </button>
+        <button onclick="showPage('page-login')"
+          class="bg-transparent text-brand border-[1.5px] border-mint-border hover:border-brand hover:bg-mint font-semibold px-8 py-3.5 rounded-lg text-[0.9375rem] transition-all cursor-pointer">
+          Sign in
+        </button>
+      </div>
+
+      <!-- Social proof -->
+      <div class="flex items-center gap-4 mt-2">
+        <div class="flex">
+          <span class="w-8 h-8 rounded-full border-2 border-white bg-brand-mid text-white text-[0.65rem] font-bold flex items-center justify-center">AO</span>
+          <span class="w-8 h-8 rounded-full border-2 border-white bg-brand-mid text-white text-[0.65rem] font-bold flex items-center justify-center -ml-2">FK</span>
+          <span class="w-8 h-8 rounded-full border-2 border-white bg-brand-mid text-white text-[0.65rem] font-bold flex items-center justify-center -ml-2">TI</span>
+          <span class="w-8 h-8 rounded-full border-2 border-white bg-brand-mid text-white text-[0.65rem] font-bold flex items-center justify-center -ml-2">BN</span>
+        </div>
+        <div class="text-xs text-muted leading-snug">
+          <strong class="text-ink">2,400+ Nigerians</strong> already on the waitlist<br>across Lagos, Abuja &amp; Port Harcourt
+        </div>
+      </div>
+    </div>
+
+    <!-- Right — dark panel with phone -->
+    <div class=" lg:min-h-screen flex items-center justify-center px-[3vw] py-[5vw] relative overflow-hidden">
+        <div class="w-full">
+            <img src="images/khero.png" alt="Kobomine app" class="w-full h-auto object-contain max-h-[80vh]">
+        </div>
+    </div>
+  </section>
+
+  <!-- STATS BAND -->
+  <div id="features" class="bg-mint border-t border-b border-mint-border py-12 px-[8vw] grid lg:grid-cols-3 gap-8">
+    <div class="text-center">
+      <div class="font-display text-5xl font-black text-brand leading-none">67%</div>
+      <div class="text-sm text-muted mt-1.5">of Nigerian earners run out of money before month-end</div>
+    </div>
+    <div class="text-center">
+      <div class="font-display text-5xl font-black text-brand leading-none">₦38K</div>
+      <div class="text-sm text-muted mt-1.5">average lost to impulse spending monthly among our users</div>
+    </div>
+    <div class="text-center">
+      <div class="font-display text-5xl font-black text-brand leading-none">4 steps</div>
+      <div class="text-sm text-muted mt-1.5">Plan → Protect → Control → Grow. Your money, intentionally.</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="py-24 px-[8vw]">
+    <div class="text-xs uppercase tracking-[0.08em] text-brand-light font-bold mb-4">What Kobomine does</div>
+    <h2 class="font-display text-[clamp(2rem,3.5vw,3rem)] font-black leading-[1.1] tracking-tight mb-5">
+      Willpower is unreliable.<br>Systems are not.
+    </h2>
+    <p class="text-base text-muted max-w-[500px] leading-relaxed">
+      Every feature answers one question: will this help you make a better financial decision?
+    </p>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mt-14">
+      <!-- Card -->
+      <div class="bg-mint border border-mint-border rounded-2xl p-7 transition-all hover:-translate-y-1 hover:shadow-xl">
+        <div class="w-12 h-12 bg-brand rounded-xl flex items-center justify-center text-xl mb-5">📋</div>
+        <h3 class="font-display text-xl font-bold mb-2">Budget Planning</h3>
+        <p class="text-sm text-muted leading-relaxed">Allocate your salary into meaningful categories — rent, food, transport, savings, and discretionary — before the month begins.</p>
+      </div>
+      <div class="bg-mint border border-mint-border rounded-2xl p-7 transition-all hover:-translate-y-1 hover:shadow-xl">
+        <div class="w-12 h-12 bg-brand rounded-xl flex items-center justify-center text-xl mb-5">🔐</div>
+        <h3 class="font-display text-xl font-bold mb-2">Protected Buckets</h3>
+        <p class="text-sm text-muted leading-relaxed">Lock essential funds so they can't be accidentally spent. Your rent is safe, even on a tough week.</p>
+      </div>
+      <div class="bg-mint border border-mint-border rounded-2xl p-7 transition-all hover:-translate-y-1 hover:shadow-xl">
+        <div class="w-12 h-12 bg-brand rounded-xl flex items-center justify-center text-xl mb-5">⏳</div>
+        <h3 class="font-display text-xl font-bold mb-2">Spending Controls</h3>
+        <p class="text-sm text-muted leading-relaxed">Set daily releases, withdrawal delays, and spending limits. Intentional friction before unnecessary spending.</p>
+      </div>
+      <div class="bg-mint border border-mint-border rounded-2xl p-7 transition-all hover:-translate-y-1 hover:shadow-xl">
+        <div class="w-12 h-12 bg-brand rounded-xl flex items-center justify-center text-xl mb-5">📈</div>
+        <h3 class="font-display text-xl font-bold mb-2">Behaviour Insights</h3>
+        <p class="text-sm text-muted leading-relaxed">Track your spending patterns, goal progress, and improvement in financial discipline over time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" class="bg-brand py-24 px-[8vw] text-white">
+    <div class="text-xs uppercase tracking-[0.08em] text-gold font-bold mb-4">The Kobomine method</div>
+    <h2 class="font-display text-[clamp(2rem,3.5vw,3rem)] font-black leading-[1.1] tracking-tight text-white mb-5">
+      Four stages. One outcome.<br>Financial stability.
+    </h2>
+    <p class="text-base text-white/65 max-w-[500px] leading-relaxed">A complete system that works even when motivation doesn't.</p>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-14">
+      <div class="flex flex-col gap-4 relative">
+        <div class="font-display text-5xl font-black text-gold leading-none">01</div>
+        <h3 class="text-lg font-semibold text-white">Plan</h3>
+        <p class="text-sm text-white/65 leading-relaxed">Set up your monthly income and allocate every naira to a purpose — savings, rent, food, transport, goals.</p>
+        <span class="absolute -right-4 top-2 text-white/20 text-2xl">→</span>
+      </div>
+      <div class="flex flex-col gap-4 relative">
+        <div class="font-display text-5xl font-black text-gold leading-none">02</div>
+        <h3 class="text-lg font-semibold text-white">Protect</h3>
+        <p class="text-sm text-white/65 leading-relaxed">Decide which funds are untouchable. Protected money stays protected, regardless of impulse.</p>
+        <span class="absolute -right-4 top-2 text-white/20 text-2xl">→</span>
+      </div>
+      <div class="flex flex-col gap-4 relative">
+        <div class="font-display text-5xl font-black text-gold leading-none">03</div>
+        <h3 class="text-lg font-semibold text-white">Control</h3>
+        <p class="text-sm text-white/65 leading-relaxed">Activate daily spending releases, withdrawal delays, and hard limits that create space for better decisions.</p>
+        <span class="absolute -right-4 top-2 text-white/20 text-2xl">→</span>
+      </div>
+      <div class="flex flex-col gap-4">
+        <div class="font-display text-5xl font-black text-gold leading-none">04</div>
+        <h3 class="text-lg font-semibold text-white">Grow</h3>
+        <p class="text-sm text-white/65 leading-relaxed">Watch your goals get closer. Track your discipline score and build the habits that compound over time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BAND -->
+  <section class="py-24 px-[8vw] text-center bg-white">
+    <div class="text-xs uppercase tracking-[0.08em] text-brand-light font-bold mb-4">Join the waitlist</div>
+    <h2 class="font-display text-[clamp(2rem,3.5vw,3rem)] font-black leading-[1.1] tracking-tight max-w-[600px] mx-auto mb-5">
+      Ready to spend intentionally?
+    </h2>
+    <p class="text-base text-muted max-w-[500px] mx-auto leading-relaxed mb-10">
+      No loans. No investing. Just you, your money, and a system that actually works.
+    </p>
+    <button onclick="showPage('page-register')"
+      class="bg-brand hover:bg-brand-mid text-white font-semibold text-base px-10 py-4 rounded-lg transition-all border-0 cursor-pointer">
+      Create your free account
+    </button>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-ink text-white/60 py-12 px-[8vw] flex flex-col md:flex-row justify-between items-center text-xs">
+    <div class="font-display text-xl font-black text-white">Kobomine</div>
+    <div>© 2026 Kobomine. Built for Nigeria's working class.</div>
+    <div>Not a bank. Not a loan app. Just better habits.</div>
+  </footer>
+</div><!-- /page-landing -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     LOGIN PAGE
+═══════════════════════════════════════════════════════ -->
+<div id="page-login" class="page">
+  <div class="grid lg:grid-cols-2 min-h-screen">
+
+    <!-- Visual panel -->
+    <div class="order-last lg:order-first bg-brand flex flex-col items-center justify-center p-16 relative overflow-hidden">
+      <div class="absolute w-[500px] h-[500px] rounded-full -top-36 -right-36"
+           style="background:radial-gradient(circle,rgba(26,122,92,0.5) 0%,transparent 70%)"></div>
+      <div class="relative z-10 text-white max-w-[380px]">
+        <div class="font-display text-3xl font-black mb-8 cursor-pointer" onclick="showPage('page-landing')">
+          Kobo<span class="text-gold">mine</span>
+        </div>
+        <h2 class="font-display text-4xl font-black leading-[1.1] mb-4">Welcome back. Your money is waiting.</h2>
+        <p class="text-[0.95rem] leading-relaxed text-white/70 mb-8">Sign in and pick up exactly where you left off. Your buckets are protected, your goals are on track.</p>
+        <div class="bg-white/10 border border-white/15 rounded-xl p-5 backdrop-blur mt-8">
+          <p class="text-sm leading-relaxed text-white/85 mb-4 italic">"I used to finish my salary in 2 weeks. Kobomine showed me I was spending ₦40K on things I couldn't even remember."</p>
+          <div class="text-xs text-gold font-semibold">— Funmilayo K., Marketing Manager, Lagos</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form panel -->
+    <div class="order-first lg:order-last flex items-center justify-center p-16 bg-white">
+      <div class="w-full max-w-[400px]">
+        <h1 class="font-display text-[2rem] font-black text-ink mb-1">Sign in</h1>
+        <p class="text-sm text-muted mb-8">New here? <span onclick="showPage('page-register')" class="text-brand font-semibold cursor-pointer">Create a free account →</span></p>
+
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-ink mb-1.5 tracking-[0.01em]">Email address</label>
+          <input type="email" id="login-email" placeholder="you@email.com"
+            class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+          <div id="login-email-err" class="text-xs text-danger mt-1"></div>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-ink mb-1.5">Password</label>
+          <div class="relative">
+            <input type="password" id="login-pw" placeholder="Your password"
+              class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+            <button onclick="togglePw('login-pw',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-xs bg-transparent border-0 cursor-pointer">Show</button>
+          </div>
+          <div id="login-pw-err" class="text-xs text-danger mt-1"></div>
+        </div>
+
+        <div class="flex justify-end mb-4">
+          <span class="text-xs text-brand font-semibold cursor-pointer">Forgot password?</span>
+        </div>
+
+        <button onclick="handleLogin()"
+          class="w-full bg-brand hover:bg-brand-mid text-white font-semibold py-3.5 rounded-lg text-[0.9375rem] font-sans transition-all hover:-translate-y-px border-0 cursor-pointer mt-1">
+          Sign in to Kobomine
+        </button>
+
+        <div class="flex items-center gap-4 my-5 text-muted text-xs">
+          <div class="flex-1 border-t border-mint-border"></div>or continue with<div class="flex-1 border-t border-mint-border"></div>
+        </div>
+
+        <button onclick="showPage('page-dashboard')"
+          class="w-full bg-mint text-brand border-[1.5px] border-mint-border font-semibold py-3.5 rounded-lg text-[0.9375rem] font-sans transition-all hover:bg-mint-border border-0 cursor-pointer">
+          🇳🇬 &nbsp;Continue with Google
+        </button>
+      </div>
+    </div>
+  </div>
+</div><!-- /page-login -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     REGISTER PAGE
+═══════════════════════════════════════════════════════ -->
+<div id="page-register" class="page">
+  <div class="grid lg:grid-cols-2 min-h-screen">
+
+    <!-- Visual panel -->
+    <div class= " order-last lg:order-first bg-brand flex flex-col items-center justify-center p-16 relative overflow-hidden">
+      <div class="absolute w-[500px] h-[500px] rounded-full -top-36 -right-36"
+           style="background:radial-gradient(circle,rgba(26,122,92,0.5) 0%,transparent 70%)"></div>
+      <div class="relative z-10 text-white max-w-[380px]">
+        <div class="font-display text-3xl font-black mb-8 cursor-pointer" onclick="showPage('page-landing')">
+          Kobo<span class="text-gold">mine</span>
+        </div>
+        <h2 class="font-display text-4xl font-black leading-[1.1] mb-4">Take control of your money in 3 minutes.</h2>
+        <p class="text-[0.95rem] leading-relaxed text-white/70 mb-8">Join thousands of young Nigerians replacing guesswork with a system that protects their income and builds real savings.</p>
+        <div class="bg-white/10 border border-white/15 rounded-xl p-5 backdrop-blur mt-8">
+          <p class="text-sm leading-relaxed text-white/85 mb-4 italic">"I set a ₦3,000/day spending limit. By the end of the month I had ₦45,000 I didn't know I could save."</p>
+          <div class="text-xs text-gold font-semibold">— Tobi A., Software Engineer, Abuja</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form panel -->
+    <div class=" order-first lg:order-last flex items-center justify-center p-16 bg-white">
+      <div class="w-full max-w-[400px]">
+        <h1 class="font-display text-[2rem] font-black text-ink mb-1">Create account</h1>
+        <p class="text-sm text-muted mb-8">Already have one? <span onclick="showPage('page-login')" class="text-brand font-semibold cursor-pointer">Sign in →</span></p>
+
+        <div class="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1.5">First name</label>
+            <input type="text" id="reg-first" placeholder="Chioma"
+              class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+            <div id="reg-first-err" class="text-xs text-danger mt-1"></div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1.5">Last name</label>
+            <input type="text" id="reg-last" placeholder="Okafor"
+              class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+          </div>
+        </div>
+
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-ink mb-1.5">Email address</label>
+          <input type="email" id="reg-email" placeholder="you@email.com"
+            class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+          <div id="reg-email-err" class="text-xs text-danger mt-1"></div>
+        </div>
+
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-ink mb-1.5">Monthly income (approximate)</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+            <input type="number" id="reg-income" placeholder="250,000"
+              class="w-full pl-10 pr-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+          </div>
+        </div>
+
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-ink mb-1.5">Password</label>
+          <div class="relative">
+            <input type="password" id="reg-pw" placeholder="At least 8 characters"
+              class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+            <button onclick="togglePw('reg-pw',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-xs bg-transparent border-0 cursor-pointer">Show</button>
+          </div>
+          <div id="reg-pw-err" class="text-xs text-danger mt-1"></div>
+        </div>
+
+        <p class="text-xs text-muted mb-4 leading-relaxed">
+          By creating an account you agree to our <span class="text-brand font-semibold cursor-pointer">Terms</span> and <span class="text-brand font-semibold cursor-pointer">Privacy Policy</span>.
+        </p>
+
+        <button onclick="handleRegister()"
+          class="w-full bg-brand hover:bg-brand-mid text-white font-semibold py-3.5 rounded-lg text-[0.9375rem] font-sans transition-all hover:-translate-y-px border-0 cursor-pointer">
+          Create my account →
+        </button>
+      </div>
+    </div>
+  </div>
+</div><!-- /page-register -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     ONBOARDING
+═══════════════════════════════════════════════════════ -->
+<div id="page-onboarding" class="page">
+  <div class="min-h-screen flex flex-col items-center justify-center p-12 bg-white">
+    <div class="w-full max-w-[560px]">
+
+      <div class="flex items-center justify-between mb-8">
+        <div class="font-display text-2xl font-black text-brand cursor-pointer" onclick="showPage('page-landing')">
+          Kobo<span class="text-brand-light">mine</span>
+        </div>
+        <div id="ob-step-label" class="text-xs text-muted">Step 1 of 4</div>
+      </div>
+
+      <!-- Progress dots -->
+      <div class="flex gap-1.5 mb-10">
+        <div id="ob-dot-0" class="h-1 flex-1 rounded-full bg-brand-light transition-colors"></div>
+        <div id="ob-dot-1" class="h-1 flex-1 rounded-full bg-mint-border transition-colors"></div>
+        <div id="ob-dot-2" class="h-1 flex-1 rounded-full bg-mint-border transition-colors"></div>
+        <div id="ob-dot-3" class="h-1 flex-1 rounded-full bg-mint-border transition-colors"></div>
+      </div>
+
+      <!-- Step 1: Income -->
+      <div class="ob-step animate-fadeup" id="ob-step-0">
+        <h2 class="font-display text-[1.75rem] font-black mb-2">What's your monthly income?</h2>
+        <p class="text-sm text-muted mb-8 leading-relaxed">We'll use this to help you allocate your money before the month begins. You can update this anytime.</p>
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-ink mb-1.5">Monthly take-home income</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+            <input type="number" id="ob-income" placeholder="250,000"
+              class="w-full pl-10 pr-4 py-4 text-xl border-[1.5px] border-mint-border rounded-lg font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+          </div>
+        </div>
+        <p class="text-xs text-muted mt-2">🔒 This stays private. We never share your financial data.</p>
+      </div>
+
+      <!-- Step 2: Categories -->
+      <div class="ob-step hidden" id="ob-step-1">
+        <h2 class="font-display text-[1.75rem] font-black mb-2">What are your spending categories?</h2>
+        <p class="text-sm text-muted mb-8 leading-relaxed">Select the categories that matter to you. We'll suggest an allocation based on your income.</p>
+        <div class="grid  grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+          <div class="cat-item bg-mint border-[1.5px] border-brand rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border');this.classList.toggle('bg-[rgba(11,61,46,0.06)]')">
+            <div class="text-2xl mb-1">🏠</div><div class="text-xs font-semibold">Rent</div><div class="text-[0.7rem] text-muted mt-0.5">~35%</div>
+          </div>
+          <div class="cat-item bg-mint border-[1.5px] border-brand rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border')">
+            <div class="text-2xl mb-1">🍲</div><div class="text-xs font-semibold">Food</div><div class="text-[0.7rem] text-muted mt-0.5">~15%</div>
+          </div>
+          <div class="cat-item bg-mint border-[1.5px] border-brand rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border')">
+            <div class="text-2xl mb-1">🚌</div><div class="text-xs font-semibold">Transport</div><div class="text-[0.7rem] text-muted mt-0.5">~10%</div>
+          </div>
+          <div class="cat-item bg-mint border-[1.5px] border-brand rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border')">
+            <div class="text-2xl mb-1">💰</div><div class="text-xs font-semibold">Savings</div><div class="text-[0.7rem] text-muted mt-0.5">~20%</div>
+          </div>
+          <div class="cat-item bg-mint border-[1.5px] border-mint-border rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border')">
+            <div class="text-2xl mb-1">🏥</div><div class="text-xs font-semibold">Health</div><div class="text-[0.7rem] text-muted mt-0.5">~5%</div>
+          </div>
+          <div class="cat-item bg-mint border-[1.5px] border-mint-border rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border')">
+            <div class="text-2xl mb-1">📱</div><div class="text-xs font-semibold">Data/Bills</div><div class="text-[0.7rem] text-muted mt-0.5">~5%</div>
+          </div>
+          <div class="cat-item bg-mint border-[1.5px] border-mint-border rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border')">
+            <div class="text-2xl mb-1">👨‍👩‍👧</div><div class="text-xs font-semibold">Family</div><div class="text-[0.7rem] text-muted mt-0.5">~10%</div>
+          </div>
+          <div class="cat-item bg-mint border-[1.5px] border-brand rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border')">
+            <div class="text-2xl mb-1">🎯</div><div class="text-xs font-semibold">Goals</div><div class="text-[0.7rem] text-muted mt-0.5">~10%</div>
+          </div>
+          <div class="cat-item bg-mint border-[1.5px] border-mint-border rounded-[10px] p-3 cursor-pointer text-center transition-all" onclick="this.classList.toggle('border-brand');this.classList.toggle('border-mint-border')">
+            <div class="text-2xl mb-1">🎉</div><div class="text-xs font-semibold">Fun money</div><div class="text-[0.7rem] text-muted mt-0.5">~5%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Controls -->
+      <div class="ob-step hidden" id="ob-step-2">
+        <h2 class="font-display text-[1.75rem] font-black mb-2">Choose your spending controls</h2>
+        <p class="text-sm text-muted mb-8 leading-relaxed">These are the guardrails that make Kobomine work. You can change them anytime.</p>
+
+        <div class="bg-mint border-[1.5px] border-brand rounded-[10px] p-4 mb-3 flex items-start gap-3 cursor-pointer transition-all" onclick="toggleControlOption(this)">
+          <span class="text-xl mt-0.5">📅</span>
+          <div><h4 class="text-sm font-bold mb-1">Daily spending release</h4><p class="text-xs text-muted leading-relaxed">Only your daily allowance is accessible each day. The rest stays protected until needed.</p></div>
+        </div>
+        <div class="bg-mint border-[1.5px] border-mint-border rounded-[10px] p-4 mb-3 flex items-start gap-3 cursor-pointer transition-all" onclick="toggleControlOption(this)">
+          <span class="text-xl mt-0.5">⏱️</span>
+          <div><h4 class="text-sm font-bold mb-1">Withdrawal delay (24h)</h4><p class="text-xs text-muted leading-relaxed">Large withdrawals require a 24-hour wait. Pause before you act on impulse.</p></div>
+        </div>
+        <div class="bg-mint border-[1.5px] border-brand rounded-[10px] p-4 mb-3 flex items-start gap-3 cursor-pointer transition-all" onclick="toggleControlOption(this)">
+          <span class="text-xl mt-0.5">🔐</span>
+          <div><h4 class="text-sm font-bold mb-1">Protected buckets</h4><p class="text-xs text-muted leading-relaxed">Lock your rent, savings, and emergency funds so they can't be touched accidentally.</p></div>
+        </div>
+        <div class="bg-mint border-[1.5px] border-mint-border rounded-[10px] p-4 mb-3 flex items-start gap-3 cursor-pointer transition-all" onclick="toggleControlOption(this)">
+          <span class="text-xl mt-0.5">🚫</span>
+          <div><h4 class="text-sm font-bold mb-1">Category spending limits</h4><p class="text-xs text-muted leading-relaxed">Cap how much you can spend in any single category per week or month.</p></div>
+        </div>
+      </div>
+
+      <!-- Step 4: Done -->
+      <div class="ob-step hidden" id="ob-step-3">
+        <div class="text-center p-8 bg-mint border border-mint-border rounded-2xl mb-8">
+          <div class="text-5xl mb-4">🎉</div>
+          <h3 class="font-display text-2xl font-black mb-2">You're set up, <span id="ob-user-name">Chioma</span>!</h3>
+          <p class="text-sm text-muted leading-relaxed">Your budget is ready. Your controls are active. Your money now has a plan. Welcome to intentional spending.</p>
+        </div>
+        <div class="bg-mint border border-mint-border rounded-xl p-5 mb-6">
+          <div class="text-xs font-bold text-brand mb-3 uppercase tracking-widest">Your setup summary</div>
+          <div class="flex flex-col gap-2 text-sm text-ink">
+            <div class="flex justify-between"><span>Monthly income</span><strong id="ob-income-display">₦250,000</strong></div>
+            <div class="flex justify-between"><span>Active buckets</span><strong>5 categories</strong></div>
+            <div class="flex justify-between"><span>Controls active</span><strong>Daily release + Protection</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nav buttons -->
+      <div class="flex justify-between items-center mt-6">
+        <button id="ob-back" onclick="obBack()"
+          class="hidden bg-transparent text-brand border-[1.5px] border-mint-border hover:border-brand hover:bg-mint font-semibold px-4 md:px-8 py-3.5 rounded-lg text-[0.9375rem] transition-all cursor-pointer">
+          ← Back
+        </button>
+        <div></div>
+        <button id="ob-next" onclick="obNext()"
+          class="bg-brand hover:bg-brand-mid text-white font-semibold px-4 md:px-8 py-3.5 rounded-lg text-[0.9375rem] transition-all border-0 cursor-pointer">
+          Continue →
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /page-onboarding -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     DASHBOARD
+═══════════════════════════════════════════════════════ -->
+<div id="page-dashboard" class="page">
+  <div class="min-h-screen" style="display:block" x-data="{ sideOpen: false }">
+
+    <!-- Sidebar backdrop (mobile only) -->
+    <div
+      x-show="sideOpen"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      @click="sideOpen = false"
+      class="fixed inset-0 bg-black/40 z-30 lg:hidden"
+      style="display:none"
+    ></div>
+
+    <!-- SIDEBAR (fixed) -->
+    <aside
+      :class="sideOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+      class="fixed top-0 left-0 w-60 h-screen bg-brand flex flex-col gap-1 px-6 py-8 overflow-y-auto z-40 transition-transform duration-300"
+    >
+      <!-- Mobile close button -->
+      <button @click="sideOpen = false" class="lg:hidden self-end text-white/60 hover:text-white text-xl mb-2 border-0 bg-transparent cursor-pointer">
+        <i class="fas fa-xmark"></i>
+      </button>
+      <div class="font-display text-[1.4rem] font-black text-white mb-8 px-2 cursor-pointer" onclick="showPage('page-landing')">
+        Kobo<span class="text-gold">mine</span>
+      </div>
+
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 text-white text-sm font-medium cursor-pointer">
+        <span class="w-5 text-center">🏠</span> Dashboard
+      </div>
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+        <span class="w-5 text-center">💰</span> My Buckets
+      </div>
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+        <span class="w-5 text-center">📋</span> Budget
+      </div>
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+        <span class="w-5 text-center">🎯</span> Goals
+      </div>
+
+      <div class="text-[0.65rem] uppercase tracking-[0.1em] text-white/35 font-semibold px-3 pt-4 pb-1">Controls</div>
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+        <span class="w-5 text-center">🔐</span> Spending Controls
+      </div>
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+        <span class="w-5 text-center">⏱️</span> Withdrawal Queue
+      </div>
+
+      <div class="text-[0.65rem] uppercase tracking-[0.1em] text-white/35 font-semibold px-3 pt-4 pb-1">Insights</div>
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+        <span class="w-5 text-center">📊</span> Analytics
+      </div>
+      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+        <span class="w-5 text-center">📜</span> History
+      </div>
+
+      <div class="mt-auto">
+        <div class="flex items-center gap-3 p-3 bg-white/10 rounded-lg">
+          <div class="w-9 h-9 rounded-full bg-gold flex items-center justify-center text-xs font-bold text-brand flex-shrink-0">CO</div>
+          <div class="min-w-0">
+            <div class="text-xs font-semibold text-white truncate">Chioma Okafor</div>
+            <div class="text-[0.7rem] text-white/50">Free plan</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="lg:ml-60 bg-[#F8FAF9] min-h-screen p-8 overflow-x-hidden">
+
+      <!-- Mobile top bar -->
+      <div class="lg:hidden flex items-center justify-between mb-6 bg-brand rounded-xl px-4 py-3">
+        <div class="font-display text-lg font-black text-white cursor-pointer" onclick="showPage('page-landing')">Kobo<span class="text-gold">mine</span></div>
+        <button @click="sideOpen = true" class="text-white text-xl border-0 bg-transparent cursor-pointer">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+
+      <!-- Header -->
+      <div class="flex justify-between items-start mb-10">
+        <div>
+          <div class="text-sm text-muted mb-1">Good morning 👋</div>
+          <div class="font-display text-[1.75rem] font-black text-ink">Chioma Okafor</div>
+          <div id="dash-date" class="text-xs text-muted mt-1">June 2026 · Day 26 of 30</div>
+        </div>
+        <div class="flex gap-3">
+          <button class="bg-transparent text-brand border-[1.5px] border-mint-border hover:border-brand hover:bg-mint text-xs font-semibold px-4 py-2 rounded-lg transition-all cursor-pointer">Add funds</button>
+          <button class="bg-brand hover:bg-brand-mid text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all border-0 cursor-pointer">Transfer</button>
+        </div>
+      </div>
+
+      <!-- Balance cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <!-- Total balance -->
+        <div class="bg-brand text-white rounded-2xl p-6 relative overflow-hidden min-w-0">
+          <div class="text-xs font-semibold uppercase tracking-[0.06em] opacity-70 mb-3">Total balance</div>
+          <div class="font-display font-black leading-none mb-2" style="font-size:clamp(1.4rem,2.5vw,2.25rem);word-break:break-all">₦187,450</div>
+          <div class="text-xs opacity-65">Across all buckets this month</div>
+          <div class="inline-flex items-center gap-1 bg-white/15 rounded-full px-3 py-0.5 text-[0.7rem] font-semibold mt-3">📈 ₦12,500 saved vs last month</div>
+        </div>
+        <!-- Available today -->
+        <div class="bg-white border border-mint-border text-ink rounded-2xl p-6 min-w-0">
+          <div class="text-xs font-semibold uppercase tracking-[0.06em] opacity-70 mb-3">Available today</div>
+          <div class="font-display font-black leading-none mb-2" style="font-size:clamp(1.4rem,2.5vw,2.25rem);word-break:break-all">₦3,200</div>
+          <div class="text-xs opacity-65">Daily release remaining</div>
+          <div class="inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-[0.7rem] font-semibold mt-3 text-brand" style="background:rgba(241,253,244,0.9)">Resets in 6h 22m</div>
+        </div>
+        <!-- Protected funds -->
+        <div class="bg-mint border border-mint-border text-ink rounded-2xl p-6 min-w-0">
+          <div class="text-xs font-semibold uppercase tracking-[0.06em] opacity-70 mb-3">Protected funds</div>
+          <div class="font-display font-black leading-none mb-2" style="font-size:clamp(1.4rem,2.5vw,2.25rem);word-break:break-all">₦142,000</div>
+          <div class="text-xs opacity-65">Locked across 3 buckets</div>
+          <div class="inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-[0.7rem] font-semibold mt-3 text-brand" style="background:rgba(241,253,244,0.9)">🔒 Secured</div>
+        </div>
+      </div>
+
+      <!-- Main grid row 1: Buckets + Controls/Goals -->
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] gap-5 mb-5">
+
+        <!-- Buckets card -->
+        <div class="bg-white border border-mint-border rounded-2xl p-6">
+          <div class="flex flex-col lg:flex-row gap-3 justify-between items-center mb-5">
+            <span class="text-sm font-bold">My Buckets</span>
+            <span class="text-xs text-brand font-semibold cursor-pointer">Manage →</span>
+          </div>
+          <div class="flex flex-col gap-3">
+            <!-- Rent -->
+            <div class="grid gap-3 items-center p-3 bg-mint rounded-[10px]" style="grid-template-columns:auto 1fr auto">
+              <div class="w-[38px] h-[38px] rounded-[9px] bg-brand flex items-center justify-center text-base">🏠</div>
+              <div>
+                <div class="text-sm font-semibold">Rent</div>
+                <div class="text-[0.72rem] text-muted">Due: July 1 · Protected</div>
+                <div class="h-1 bg-mint-border rounded mt-1"><div class="h-1 bg-brand rounded progress-fill" style="width:100%"></div></div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-brand">₦85,000</div>
+                <div class="text-[0.65rem] text-muted">🔒 Locked</div>
+              </div>
+            </div>
+            <!-- Emergency fund -->
+            <div class="grid gap-3 items-center p-3 bg-mint rounded-[10px]" style="grid-template-columns:auto 1fr auto">
+              <div class="w-[38px] h-[38px] rounded-[9px] bg-brand flex items-center justify-center text-base">💰</div>
+              <div>
+                <div class="text-sm font-semibold">Emergency Fund</div>
+                <div class="text-[0.72rem] text-muted">Goal: ₦150,000</div>
+                <div class="h-1 bg-mint-border rounded mt-1"><div class="h-1 bg-brand rounded progress-fill" style="width:62%"></div></div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-brand">₦93,000</div>
+                <div class="text-[0.65rem] text-muted">62% done</div>
+              </div>
+            </div>
+            <!-- Food -->
+            <div class="grid gap-3 items-center p-3 bg-mint rounded-[10px]" style="grid-template-columns:auto 1fr auto">
+              <div class="w-[38px] h-[38px] rounded-[9px] bg-brand flex items-center justify-center text-base">🍲</div>
+              <div>
+                <div class="text-sm font-semibold">Food &amp; Groceries</div>
+                <div class="text-[0.72rem] text-muted">Limit: ₦30,000/month</div>
+                <div class="h-1 bg-mint-border rounded mt-1"><div class="h-1 rounded progress-fill" style="width:73%;background:#C9A84C"></div></div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-brand">₦8,100</div>
+                <div class="text-[0.65rem]" style="color:#C9A84C">⚠️ 73% used</div>
+              </div>
+            </div>
+            <!-- Transport -->
+            <div class="grid gap-3 items-center p-3 bg-mint rounded-[10px]" style="grid-template-columns:auto 1fr auto">
+              <div class="w-[38px] h-[38px] rounded-[9px] bg-brand flex items-center justify-center text-base">🚌</div>
+              <div>
+                <div class="text-sm font-semibold">Transport</div>
+                <div class="text-[0.72rem] text-muted">Limit: ₦18,000/month</div>
+                <div class="h-1 bg-mint-border rounded mt-1"><div class="h-1 bg-brand rounded progress-fill" style="width:44%"></div></div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-brand">₦10,080</div>
+                <div class="text-[0.65rem] text-muted">44% used</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls + Goals -->
+        <div class="flex flex-col gap-5">
+          <!-- Spending controls -->
+          <div class="bg-white border border-mint-border rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-5">
+              <span class="text-sm font-bold">Spending Controls</span>
+              <span class="text-xs text-brand font-semibold cursor-pointer">Edit</span>
+            </div>
+            <div class="flex flex-col gap-3">
+              <div class="flex justify-between items-center p-3 px-4 bg-mint rounded-[10px]">
+                <div><div class="text-sm font-semibold">Daily release</div><div class="text-[0.72rem] text-muted">₦5,000/day · resets midnight</div></div>
+                <button class="toggle-btn on w-11 h-6 bg-brand rounded-full relative border-0 cursor-pointer flex-shrink-0 transition-colors" onclick="this.classList.toggle('on');this.style.background=this.classList.contains('on')?'#0B3D2E':'#C8EDDA'">
+                  <span class="toggle-knob absolute top-0.5 w-5 h-5 bg-white rounded-full" style="left:22px"></span>
+                </button>
+              </div>
+              <div class="flex justify-between items-center p-3 px-4 bg-mint rounded-[10px]">
+                <div><div class="text-sm font-semibold">Withdrawal delay</div><div class="text-[0.72rem] text-muted">24h wait on amounts &gt; ₦20K</div></div>
+                <button class="toggle-btn on w-11 h-6 bg-brand rounded-full relative border-0 cursor-pointer flex-shrink-0 transition-colors" onclick="this.classList.toggle('on');this.style.background=this.classList.contains('on')?'#0B3D2E':'#C8EDDA'">
+                  <span class="toggle-knob absolute top-0.5 w-5 h-5 bg-white rounded-full" style="left:22px"></span>
+                </button>
+              </div>
+              <div class="flex justify-between items-center p-3 px-4 bg-mint rounded-[10px]">
+                <div><div class="text-sm font-semibold">Bucket protection</div><div class="text-[0.72rem] text-muted">Rent &amp; savings locked</div></div>
+                <button class="toggle-btn on w-11 h-6 bg-brand rounded-full relative border-0 cursor-pointer flex-shrink-0 transition-colors" onclick="this.classList.toggle('on');this.style.background=this.classList.contains('on')?'#0B3D2E':'#C8EDDA'">
+                  <span class="toggle-knob absolute top-0.5 w-5 h-5 bg-white rounded-full" style="left:22px"></span>
+                </button>
+              </div>
+              <div class="flex justify-between items-center p-3 px-4 bg-mint rounded-[10px]">
+                <div><div class="text-sm font-semibold">Category limits</div><div class="text-[0.72rem] text-muted">Per-category monthly cap</div></div>
+                <button class="toggle-btn w-11 h-6 rounded-full relative border-0 cursor-pointer flex-shrink-0 transition-colors" style="background:#C8EDDA" onclick="this.classList.toggle('on');this.style.background=this.classList.contains('on')?'#0B3D2E':'#C8EDDA'">
+                  <span class="toggle-knob absolute top-0.5 w-5 h-5 bg-white rounded-full" style="left:2px"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Goals -->
+          <div class="bg-white border border-mint-border rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-5">
+              <span class="text-sm font-bold">Goal Progress</span>
+              <span class="text-xs text-brand font-semibold cursor-pointer">All goals →</span>
+            </div>
+            <div class="flex flex-col gap-3">
+              <div>
+                <div class="flex justify-between text-xs mb-1"><span>🎯 Emergency Fund</span><strong class="text-brand">62%</strong></div>
+                <div class="h-2 bg-mint-border rounded-full"><div class="h-2 bg-brand rounded-full progress-fill" style="width:62%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1"><span>✈️ Holiday Fund</span><strong class="text-brand">29%</strong></div>
+                <div class="h-2 bg-mint-border rounded-full"><div class="h-2 bg-brand rounded-full progress-fill" style="width:29%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1"><span>💻 New Laptop</span><strong style="color:#C9A84C">87%</strong></div>
+                <div class="h-2 bg-mint-border rounded-full"><div class="h-2 rounded-full progress-fill" style="width:87%;background:#C9A84C"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main grid row 2: Spending chart + Transactions -->
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] gap-5">
+
+        <!-- Spending chart -->
+        <div class="bg-white border border-mint-border rounded-2xl p-6">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-sm font-bold">Spending this month</span>
+            <span class="text-xs text-brand font-semibold cursor-pointer">Details →</span>
+          </div>
+          <div class="text-xs text-muted mb-2">Daily spend (₦K) — June 2026</div>
+          <div class="flex items-end gap-2 h-24 mt-4">
+            <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full rounded-t bg-mint-border" style="height:40px"></div><span class="text-[0.65rem] text-muted">W1</span></div>
+            <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full rounded-t bg-mint-border" style="height:65px"></div><span class="text-[0.65rem] text-muted">W2</span></div>
+            <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full rounded-t bg-brand" style="height:55px"></div><span class="text-[0.65rem] text-muted">W3</span></div>
+            <div class="flex-1 flex flex-col items-center gap-1"><div class="w-full rounded-t bg-mint-border" style="height:30px"></div><span class="text-[0.65rem] text-muted">W4</span></div>
+          </div>
+          <div class="grid grid-cols-3 gap-3 mt-5 text-center">
+            <div class="bg-mint rounded-lg p-3">
+              <div class="font-display text-lg font-bold text-brand">₦42K</div>
+              <div class="text-[0.7rem] text-muted">Total spent</div>
+            </div>
+            <div class="bg-mint rounded-lg p-3">
+              <div class="font-display text-lg font-bold text-brand">₦1,615</div>
+              <div class="text-[0.7rem] text-muted">Daily avg</div>
+            </div>
+            <div class="bg-mint rounded-lg p-3">
+              <div class="font-display text-lg font-bold" style="color:#C9A84C">-14%</div>
+              <div class="text-[0.7rem] text-muted">vs last month</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transactions -->
+        <div class="bg-white border border-mint-border rounded-2xl p-6">
+          <div class="flex justify-between items-center mb-5">
+            <span class="text-sm font-bold">Recent Transactions</span>
+            <span class="text-xs text-brand font-semibold cursor-pointer">View all →</span>
+          </div>
+          <div class="flex flex-col">
+            <div class="flex items-center gap-3 py-2.5 border-b border-mint">
+              <div class="w-9 h-9 rounded-[9px] bg-mint flex items-center justify-center text-sm flex-shrink-0">🍲</div>
+              <div class="flex-1"><div class="text-sm font-semibold">Shoprite, VI</div><div class="text-[0.72rem] text-muted">Food · Today 11:23am</div></div>
+              <div class="text-sm font-bold text-danger">-₦4,200</div>
+            </div>
+            <div class="flex items-center gap-3 py-2.5 border-b border-mint">
+              <div class="w-9 h-9 rounded-[9px] flex items-center justify-center text-sm flex-shrink-0" style="background:#FFF7E6">🚌</div>
+              <div class="flex-1"><div class="text-sm font-semibold">Uber ride</div><div class="text-[0.72rem] text-muted">Transport · Today 8:05am</div></div>
+              <div class="text-sm font-bold text-danger">-₦1,800</div>
+            </div>
+            <div class="flex items-center gap-3 py-2.5 border-b border-mint">
+              <div class="w-9 h-9 rounded-[9px] flex items-center justify-center text-sm flex-shrink-0" style="background:#E8F5E9">💸</div>
+              <div class="flex-1"><div class="text-sm font-semibold">Salary received</div><div class="text-[0.72rem] text-muted">Income · Jun 25</div></div>
+              <div class="text-sm font-bold text-brand">+₦250,000</div>
+            </div>
+            <div class="flex items-center gap-3 py-2.5 border-b border-mint">
+              <div class="w-9 h-9 rounded-[9px] bg-mint flex items-center justify-center text-sm flex-shrink-0">📱</div>
+              <div class="flex-1"><div class="text-sm font-semibold">MTN Data bundle</div><div class="text-[0.72rem] text-muted">Bills · Jun 24</div></div>
+              <div class="text-sm font-bold text-danger">-₦3,000</div>
+            </div>
+            <div class="flex items-center gap-3 py-2.5">
+              <div class="w-9 h-9 rounded-[9px] flex items-center justify-center text-sm flex-shrink-0" style="background:rgba(201,168,76,0.15)">⏳</div>
+              <div class="flex-1"><div class="text-sm font-semibold">₦25,000 withdrawal</div><div class="text-[0.72rem] text-muted">Pending delay · Jun 24</div></div>
+              <div class="text-sm font-bold" style="color:#C9A84C">Pending</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div><!-- /page-dashboard -->
+
+
+<script>
+// ── PAGE ROUTER ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── ONBOARDING STEPS (show/hide with Tailwind hidden class) ──
+let obStep = 0;
+const totalSteps = 4;
+
+function updateObUI() {
+  document.querySelectorAll('.ob-step').forEach((s, i) => {
+    s.classList.toggle('hidden', i !== obStep);
+    if (i === obStep) s.classList.add('animate-fadeup');
+  });
+  for (let i = 0; i < totalSteps; i++) {
+    const dot = document.getElementById('ob-dot-' + i);
+    dot.style.background = i < obStep ? '#0B3D2E' : i === obStep ? '#1A7A5C' : '#C8EDDA';
+  }
+  document.getElementById('ob-step-label').textContent = `Step ${obStep + 1} of ${totalSteps}`;
+  const backBtn = document.getElementById('ob-back');
+  backBtn.classList.toggle('hidden', obStep === 0);
+  document.getElementById('ob-next').textContent = obStep === totalSteps - 1 ? 'Go to my dashboard →' : 'Continue →';
+}
+
+function obNext() {
+  if (obStep === 0) {
+    const income = document.getElementById('ob-income').value;
+    if (income) document.getElementById('ob-income-display').textContent = '₦' + parseInt(income).toLocaleString();
+  }
+  if (obStep < totalSteps - 1) { obStep++; updateObUI(); }
+  else showPage('page-dashboard');
+}
+
+function obBack() {
+  if (obStep > 0) { obStep--; updateObUI(); }
+}
+
+// ── TOGGLE SWITCH helper (knob position) ──
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  const knob = btn.querySelector('.toggle-knob');
+  if (!knob) return;
+  knob.style.left = btn.classList.contains('on') ? '22px' : '2px';
+});
+
+// ── AUTH ──
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
+}
+
+function handleLogin() {
+  const email = document.getElementById('login-email');
+  const pw    = document.getElementById('login-pw');
+  let ok = true;
+  document.getElementById('login-email-err').textContent = '';
+  document.getElementById('login-pw-err').textContent = '';
+  if (!email.value.includes('@')) {
+    document.getElementById('login-email-err').textContent = 'Please enter a valid email address.';
+    email.style.borderColor = '#C0392B'; ok = false;
+  } else { email.style.borderColor = ''; }
+  if (pw.value.length < 6) {
+    document.getElementById('login-pw-err').textContent = 'Password must be at least 6 characters.';
+    pw.style.borderColor = '#C0392B'; ok = false;
+  } else { pw.style.borderColor = ''; }
+  if (ok) showPage('page-dashboard');
+}
+
+function handleRegister() {
+  const first = document.getElementById('reg-first');
+  const email = document.getElementById('reg-email');
+  const pw    = document.getElementById('reg-pw');
+  let ok = true;
+  ['reg-first-err','reg-email-err','reg-pw-err'].forEach(id => document.getElementById(id).textContent = '');
+  if (!first.value.trim()) { document.getElementById('reg-first-err').textContent = 'Please enter your first name.'; ok = false; }
+  if (!email.value.includes('@')) { document.getElementById('reg-email-err').textContent = 'Please enter a valid email.'; ok = false; }
+  if (pw.value.length < 8) { document.getElementById('reg-pw-err').textContent = 'Password must be at least 8 characters.'; ok = false; }
+  if (ok) {
+    document.getElementById('ob-user-name').textContent = first.value.trim();
+    const income = document.getElementById('reg-income').value;
+    if (income) document.getElementById('ob-income-display').textContent = '₦' + parseInt(income).toLocaleString();
+    showPage('page-onboarding');
+  }
+}
+
+// ── CONTROL OPTION toggle (onboarding step 3) ──
+function toggleControlOption(el) {
+  const isOn = el.style.borderColor === 'rgb(11, 61, 46)' || el.classList.contains('border-brand');
+  el.style.borderColor = isOn ? '' : '#0B3D2E';
+  el.style.background  = isOn ? '' : 'rgba(11,61,46,0.04)';
+}
+
+// ── DATE ──
+const now = new Date();
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const el = document.getElementById('dash-date');
+if (el) {
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  el.textContent = `${months[now.getMonth()]} ${now.getFullYear()} · Day ${now.getDate()} of ${daysInMonth}`;
+}
+</script>
+</body>
+</html>
