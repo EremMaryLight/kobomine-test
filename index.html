@@ -71,6 +71,10 @@ tailwind.config = {
 
   /* Progress fill */
   .progress-fill { transition: width 0.5s ease; }
+
+  /* Dashboard sub-views */
+  .dash-view { display: none; }
+  .dash-view.active { display: block; }
 </style>
 </head>
 <body class="font-sans bg-white text-ink min-h-screen">
@@ -655,21 +659,21 @@ with structure
         Kobo<span class="text-gold">mine</span>
       </div>
 
-      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 text-white text-sm font-medium cursor-pointer">
+      <div data-view="main" onclick="showDashView('main')" class="dash-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/10 text-white text-sm font-medium cursor-pointer">
         <span class="w-5 text-center">🏠</span> Dashboard
       </div>
-      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+      <div data-view="buckets" onclick="showDashView('buckets')" class="dash-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
         <span class="w-5 text-center">💰</span> My Buckets
       </div>
-      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+      <div data-view="budget" onclick="showDashView('budget')" class="dash-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
         <span class="w-5 text-center">📋</span> Budget
       </div>
-      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+      <div data-view="goals" onclick="showDashView('goals')" class="dash-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
         <span class="w-5 text-center">🎯</span> Goals
       </div>
 
       <div class="text-[0.65rem] uppercase tracking-[0.1em] text-white/35 font-semibold px-3 pt-4 pb-1">Controls</div>
-      <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
+      <div data-view="controls" onclick="showDashView('controls')" class="dash-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
         <span class="w-5 text-center">🔐</span> Spending Controls
       </div>
       <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/65 hover:bg-white/10 hover:text-white text-sm font-medium cursor-pointer transition-all">
@@ -705,6 +709,9 @@ with structure
           <i class="fas fa-bars"></i>
         </button>
       </div>
+
+      <!-- DASHBOARD MAIN VIEW -->
+      <div id="dash-view-main" class="dash-view active">
 
       <!-- Header -->
       <div class="flex justify-between items-start mb-10">
@@ -937,6 +944,496 @@ with structure
         </div>
 
       </div>
+      </div><!-- /dash-view-main -->
+
+      <!-- MY BUCKETS VIEW -->
+      <div id="dash-view-buckets" class="dash-view">
+
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-10">
+          <div>
+            <div class="text-sm text-muted mb-1">Manage your money 💰</div>
+            <div class="font-display text-[1.75rem] font-black text-ink">My Buckets</div>
+          </div>
+        </div>
+
+        <div class="max-w-xl">
+
+          <!-- Spending Allowance card -->
+          <div class="bg-white border border-mint-border rounded-2xl p-6">
+            <div class="mb-5">
+              <div class="text-sm font-bold mb-1">Spending Allowance</div>
+              <div class="text-xs text-muted">Set how much you can access per day, week, or month.</div>
+            </div>
+
+            <!-- Period tabs -->
+            <div class="flex gap-1 mb-5 bg-mint rounded-lg p-1">
+              <button onclick="setBucketPeriod('daily',this)" id="tab-daily" class="bucket-tab flex-1 text-xs font-semibold py-2 rounded-md transition-all border-0 cursor-pointer" style="background:#0B3D2E;color:white">Daily</button>
+              <button onclick="setBucketPeriod('weekly',this)" id="tab-weekly" class="bucket-tab flex-1 text-xs font-semibold py-2 rounded-md transition-all border-0 cursor-pointer" style="background:transparent;color:#5A7368">Weekly</button>
+              <button onclick="setBucketPeriod('monthly',this)" id="tab-monthly" class="bucket-tab flex-1 text-xs font-semibold py-2 rounded-md transition-all border-0 cursor-pointer" style="background:transparent;color:#5A7368">Monthly</button>
+            </div>
+
+            <!-- Daily panel -->
+            <div id="bucket-panel-daily" class="bucket-panel">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Daily spending limit</label>
+              <div class="text-xs text-muted mb-3">How much can you spend in a single day?</div>
+              <div class="relative mb-4">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+                <input type="number" id="bucket-daily-amount" placeholder="5,000" value="5000"
+                  class="w-full pl-10 pr-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+              </div>
+              <div class="bg-mint rounded-lg p-3 mb-4 text-xs text-muted leading-relaxed">
+                💡 At ₦5,000/day you'll spend ~₦150,000 over 30 days — leaving ₦100,000 for savings and bills.
+              </div>
+            </div>
+
+            <!-- Weekly panel -->
+            <div id="bucket-panel-weekly" class="bucket-panel hidden">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Weekly spending limit</label>
+              <div class="text-xs text-muted mb-3">How much can you spend in a single week?</div>
+              <div class="relative mb-4">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+                <input type="number" id="bucket-weekly-amount" placeholder="30,000"
+                  class="w-full pl-10 pr-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+              </div>
+              <div class="bg-mint rounded-lg p-3 mb-4 text-xs text-muted leading-relaxed">
+                💡 At ₦30,000/week you'll spend ~₦120,000 over 4 weeks — leaving ₦130,000 for savings and bills.
+              </div>
+            </div>
+
+            <!-- Monthly panel -->
+            <div id="bucket-panel-monthly" class="bucket-panel hidden">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Monthly spending limit</label>
+              <div class="text-xs text-muted mb-3">Maximum total spending for the month.</div>
+              <div class="relative mb-4">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+                <input type="number" id="bucket-monthly-amount" placeholder="100,000"
+                  class="w-full pl-10 pr-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+              </div>
+              <div class="bg-mint rounded-lg p-3 mb-4 text-xs text-muted leading-relaxed">
+                💡 A monthly cap protects the rest of your income for savings and essential bills.
+              </div>
+            </div>
+
+            <button onclick="saveBucketAllowance()" class="w-full bg-brand hover:bg-brand-mid text-white font-semibold py-3 rounded-lg text-sm font-sans transition-all border-0 cursor-pointer">
+              Save Allowance
+            </button>
+            <div id="bucket-save-msg" class="hidden text-xs text-brand font-semibold text-center mt-3">✓ Allowance saved successfully!</div>
+          </div>
+
+        </div>
+      </div><!-- /dash-view-buckets -->
+
+      <!-- GOALS VIEW -->
+      <div id="dash-view-goals" class="dash-view">
+
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-10">
+          <div>
+            <div class="text-sm text-muted mb-1">Track your progress 🎯</div>
+            <div class="font-display text-[1.75rem] font-black text-ink">My Goals</div>
+          </div>
+          <button onclick="toggleAddGoalForm()" class="bg-brand hover:bg-brand-mid text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all border-0 cursor-pointer">+ Add goal</button>
+        </div>
+
+        <div class="max-w-xl">
+
+          <!-- Add Goal form -->
+          <div id="add-goal-form" class="hidden bg-white border border-mint-border rounded-2xl p-6 mb-5">
+            <div class="text-xs font-bold text-ink mb-4 uppercase tracking-widest">New Goal</div>
+            <div class="mb-3">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Goal name</label>
+              <input type="text" id="goal-name" placeholder="e.g. Holiday fund, New phone…"
+                class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+              <div id="goal-name-err" class="text-xs text-danger mt-1"></div>
+            </div>
+            <div class="mb-3">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Target amount</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+                <input type="number" id="goal-target" placeholder="50,000"
+                  class="w-full pl-10 pr-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+              </div>
+              <div id="goal-target-err" class="text-xs text-danger mt-1"></div>
+            </div>
+            <div class="mb-5">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Target date <span class="text-muted font-normal">(optional)</span></label>
+              <input type="date" id="goal-date"
+                class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+            </div>
+            <div class="flex gap-2">
+              <button onclick="addGoal()" class="flex-1 bg-brand hover:bg-brand-mid text-white text-sm font-semibold py-3 rounded-lg transition-all border-0 cursor-pointer">Save goal</button>
+              <button onclick="toggleAddGoalForm()" class="flex-1 bg-transparent text-brand border-[1.5px] border-mint-border text-sm font-semibold py-3 rounded-lg transition-all cursor-pointer">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Goals list -->
+          <div id="goals-list" class="flex flex-col gap-3">
+            <div class="p-4 bg-white border border-mint-border rounded-2xl">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <div class="text-sm font-semibold">🎯 Emergency Fund</div>
+                  <div class="text-[0.72rem] text-muted mt-0.5">Target: ₦150,000</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold text-brand">₦93,000</div>
+                  <div class="text-[0.65rem] text-muted">62% done</div>
+                </div>
+              </div>
+              <div class="h-2 bg-mint-border rounded-full"><div class="h-2 bg-brand rounded-full progress-fill" style="width:62%"></div></div>
+            </div>
+            <div class="p-4 bg-white border border-mint-border rounded-2xl">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <div class="text-sm font-semibold">✈️ Holiday Fund</div>
+                  <div class="text-[0.72rem] text-muted mt-0.5">Target: ₦200,000</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold text-brand">₦58,000</div>
+                  <div class="text-[0.65rem] text-muted">29% done</div>
+                </div>
+              </div>
+              <div class="h-2 bg-mint-border rounded-full"><div class="h-2 bg-brand rounded-full progress-fill" style="width:29%"></div></div>
+            </div>
+            <div class="p-4 bg-white border border-mint-border rounded-2xl">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <div class="text-sm font-semibold">💻 New Laptop</div>
+                  <div class="text-[0.72rem] text-muted mt-0.5">Target: ₦350,000</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold" style="color:#C9A84C">₦304,500</div>
+                  <div class="text-[0.65rem]" style="color:#C9A84C">87% done</div>
+                </div>
+              </div>
+              <div class="h-2 bg-mint-border rounded-full"><div class="h-2 rounded-full progress-fill" style="width:87%;background:#C9A84C"></div></div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /dash-view-goals -->
+
+      <!-- BUDGET VIEW -->
+      <div id="dash-view-budget" class="dash-view">
+
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-6">
+          <div>
+            <div class="text-sm text-muted mb-1">Plan your spending 📋</div>
+            <div class="font-display text-[1.75rem] font-black text-ink">Budget</div>
+          </div>
+          <button onclick="toggleAddBudgetForm()" class="bg-brand hover:bg-brand-mid text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all border-0 cursor-pointer">+ Add category</button>
+        </div>
+
+        <!-- Income summary -->
+        <div class="bg-brand text-white rounded-2xl p-5 mb-6 max-w-xl">
+          <div class="text-xs font-semibold uppercase tracking-[0.06em] opacity-70 mb-3">June 2026 · Monthly income</div>
+          <div class="font-display text-3xl font-black mb-4">₦250,000</div>
+          <div class="flex gap-4 text-xs">
+            <div><div class="opacity-60 mb-0.5">Allocated</div><div class="font-bold text-gold" id="budget-allocated">₦222,500</div></div>
+            <div><div class="opacity-60 mb-0.5">Unallocated</div><div class="font-bold" id="budget-unallocated">₦27,500</div></div>
+          </div>
+          <div class="mt-3 h-1.5 bg-white/20 rounded-full">
+            <div id="budget-bar" class="h-1.5 bg-gold rounded-full transition-all" style="width:89%"></div>
+          </div>
+        </div>
+
+        <div class="max-w-xl">
+
+          <!-- Add Category form -->
+          <div id="add-budget-form" class="hidden bg-white border border-mint-border rounded-2xl p-6 mb-5">
+            <div class="text-xs font-bold text-ink mb-4 uppercase tracking-widest">New Budget Category</div>
+            <div class="mb-3">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Category</label>
+              <select id="budget-cat-select" onchange="handleBudgetCatSelect(this)"
+                class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+                <option value="">— Pick a category —</option>
+                <option value="🏥 Health">🏥 Health</option>
+                <option value="📱 Data / Bills">📱 Data / Bills</option>
+                <option value="👨‍👩‍👧 Family">👨‍👩‍👧 Family</option>
+                <option value="🎉 Fun money">🎉 Fun money</option>
+                <option value="custom">✏️ Custom…</option>
+              </select>
+            </div>
+            <div id="budget-custom-wrap" class="mb-3 hidden">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Custom name</label>
+              <input type="text" id="budget-cat-custom" placeholder="e.g. Gym, Church offering…"
+                class="w-full px-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+            </div>
+            <div class="mb-5">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Monthly budget</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+                <input type="number" id="budget-cat-amount" placeholder="10,000"
+                  class="w-full pl-10 pr-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+              </div>
+              <div id="budget-cat-err" class="text-xs text-danger mt-1"></div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="addBudgetCategory()" class="flex-1 bg-brand hover:bg-brand-mid text-white text-sm font-semibold py-3 rounded-lg transition-all border-0 cursor-pointer">Save category</button>
+              <button onclick="toggleAddBudgetForm()" class="flex-1 bg-transparent text-brand border-[1.5px] border-mint-border text-sm font-semibold py-3 rounded-lg transition-all cursor-pointer">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Budget category list -->
+          <div id="budget-list" class="flex flex-col gap-3">
+
+            <!-- Rent -->
+            <div class="bg-white border border-mint-border rounded-2xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-base flex-shrink-0">🏠</div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold">Rent</div>
+                  <div class="text-[0.7rem] text-muted">Protected · Due July 1</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold text-brand">₦85,000</div>
+                  <div class="text-[0.65rem] text-muted">of ₦85,000</div>
+                </div>
+              </div>
+              <div class="h-2 bg-mint-border rounded-full mb-1"><div class="h-2 bg-brand rounded-full progress-fill" style="width:100%"></div></div>
+              <div class="flex justify-between text-[0.68rem] text-muted"><span>🔒 Locked</span><span>100% used</span></div>
+            </div>
+
+            <!-- Food -->
+            <div class="bg-white border border-mint-border rounded-2xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-base flex-shrink-0">🍲</div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold">Food &amp; Groceries</div>
+                  <div class="text-[0.7rem] text-muted">Monthly limit</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold text-brand">₦21,900</div>
+                  <div class="text-[0.65rem] text-muted">of ₦37,500</div>
+                </div>
+              </div>
+              <div class="h-2 bg-mint-border rounded-full mb-1"><div class="h-2 rounded-full progress-fill" style="width:58%;background:#C9A84C"></div></div>
+              <div class="flex justify-between text-[0.68rem]"><span class="text-muted">₦15,600 remaining</span><span style="color:#C9A84C">58% used</span></div>
+            </div>
+
+            <!-- Transport -->
+            <div class="bg-white border border-mint-border rounded-2xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-base flex-shrink-0">🚌</div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold">Transport</div>
+                  <div class="text-[0.7rem] text-muted">Monthly limit</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold text-brand">₦7,920</div>
+                  <div class="text-[0.65rem] text-muted">of ₦25,000</div>
+                </div>
+              </div>
+              <div class="h-2 bg-mint-border rounded-full mb-1"><div class="h-2 bg-brand rounded-full progress-fill" style="width:32%"></div></div>
+              <div class="flex justify-between text-[0.68rem] text-muted"><span>₦17,080 remaining</span><span>32% used</span></div>
+            </div>
+
+            <!-- Savings -->
+            <div class="bg-white border border-mint-border rounded-2xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-base flex-shrink-0">💰</div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold">Savings</div>
+                  <div class="text-[0.7rem] text-muted">Monthly target</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold text-brand">₦0</div>
+                  <div class="text-[0.65rem] text-muted">of ₦50,000</div>
+                </div>
+              </div>
+              <div class="h-2 bg-mint-border rounded-full mb-1"><div class="h-2 bg-brand rounded-full progress-fill" style="width:0%"></div></div>
+              <div class="flex justify-between text-[0.68rem] text-muted"><span>₦50,000 remaining</span><span>0% used</span></div>
+            </div>
+
+            <!-- Goals contribution -->
+            <div class="bg-white border border-mint-border rounded-2xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-base flex-shrink-0">🎯</div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold">Goals</div>
+                  <div class="text-[0.7rem] text-muted">Monthly contribution</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold text-brand">₦0</div>
+                  <div class="text-[0.65rem] text-muted">of ₦25,000</div>
+                </div>
+              </div>
+              <div class="h-2 bg-mint-border rounded-full mb-1"><div class="h-2 bg-brand rounded-full progress-fill" style="width:0%"></div></div>
+              <div class="flex justify-between text-[0.68rem] text-muted"><span>₦25,000 remaining</span><span>0% used</span></div>
+            </div>
+
+          </div>
+        </div>
+      </div><!-- /dash-view-budget -->
+
+      <!-- SPENDING CONTROLS VIEW -->
+      <div id="dash-view-controls" class="dash-view">
+
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-10">
+          <div>
+            <div class="text-sm text-muted mb-1">Protect your money 🔐</div>
+            <div class="font-display text-[1.75rem] font-black text-ink">Spending Controls</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          <!-- Daily Release -->
+          <div class="bg-white border border-mint-border rounded-2xl p-6">
+            <div class="flex justify-between items-start mb-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-lg flex-shrink-0">📅</div>
+                <div>
+                  <div class="text-sm font-bold">Daily Release</div>
+                  <div class="text-xs text-muted">Limit how much you can spend per day</div>
+                </div>
+              </div>
+              <button class="toggle-btn on w-11 h-6 bg-brand rounded-full relative border-0 cursor-pointer flex-shrink-0 transition-colors" onclick="this.classList.toggle('on');this.style.background=this.classList.contains('on')?'#0B3D2E':'#C8EDDA'">
+                <span class="toggle-knob absolute top-0.5 w-5 h-5 bg-white rounded-full" style="left:22px"></span>
+              </button>
+            </div>
+            <div class="mb-3">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Amount released per day</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+                <input type="number" placeholder="5,000" value="5000"
+                  class="w-full pl-10 pr-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+              </div>
+            </div>
+            <div class="bg-mint rounded-lg p-3 mb-4 text-xs text-muted leading-relaxed">
+              💡 Only this amount is accessible each day. The rest stays protected until midnight reset.
+            </div>
+            <button onclick="saveControl('ctrl-daily-msg')" class="w-full bg-brand hover:bg-brand-mid text-white font-semibold py-3 rounded-lg text-sm transition-all border-0 cursor-pointer">Save</button>
+            <div id="ctrl-daily-msg" class="hidden text-xs text-brand font-semibold text-center mt-3">✓ Daily release updated!</div>
+          </div>
+
+          <!-- Withdrawal Delay -->
+          <div class="bg-white border border-mint-border rounded-2xl p-6">
+            <div class="flex justify-between items-start mb-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-lg flex-shrink-0">⏱️</div>
+                <div>
+                  <div class="text-sm font-bold">Withdrawal Delay</div>
+                  <div class="text-xs text-muted">Add a waiting period for large withdrawals</div>
+                </div>
+              </div>
+              <button class="toggle-btn on w-11 h-6 bg-brand rounded-full relative border-0 cursor-pointer flex-shrink-0 transition-colors" onclick="this.classList.toggle('on');this.style.background=this.classList.contains('on')?'#0B3D2E':'#C8EDDA'">
+                <span class="toggle-knob absolute top-0.5 w-5 h-5 bg-white rounded-full" style="left:22px"></span>
+              </button>
+            </div>
+            <div class="mb-3">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Trigger delay above</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-semibold text-sm">₦</span>
+                <input type="number" placeholder="20,000" value="20000"
+                  class="w-full pl-10 pr-4 py-3 border-[1.5px] border-mint-border rounded-lg text-sm font-sans text-ink bg-white outline-none transition-all focus:border-brand focus:shadow-[0_0_0_3px_rgba(11,61,46,0.1)]">
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="block text-xs font-semibold text-ink mb-1.5">Delay duration</label>
+              <div class="flex gap-1 bg-mint rounded-lg p-1">
+                <button onclick="setDelayTab(this)" class="delay-tab flex-1 text-xs font-semibold py-2 rounded-md transition-all border-0 cursor-pointer" style="background:#0B3D2E;color:white">24 hours</button>
+                <button onclick="setDelayTab(this)" class="delay-tab flex-1 text-xs font-semibold py-2 rounded-md transition-all border-0 cursor-pointer" style="background:transparent;color:#5A7368">48 hours</button>
+                <button onclick="setDelayTab(this)" class="delay-tab flex-1 text-xs font-semibold py-2 rounded-md transition-all border-0 cursor-pointer" style="background:transparent;color:#5A7368">72 hours</button>
+              </div>
+            </div>
+            <div class="bg-mint rounded-lg p-3 mb-4 text-xs text-muted leading-relaxed">
+              💡 Withdrawals above the threshold wait in a queue for the full delay before going through.
+            </div>
+            <button onclick="saveControl('ctrl-delay-msg')" class="w-full bg-brand hover:bg-brand-mid text-white font-semibold py-3 rounded-lg text-sm transition-all border-0 cursor-pointer">Save</button>
+            <div id="ctrl-delay-msg" class="hidden text-xs text-brand font-semibold text-center mt-3">✓ Withdrawal delay updated!</div>
+          </div>
+
+          <!-- Bucket Protection -->
+          <div class="bg-white border border-mint-border rounded-2xl p-6">
+            <div class="flex justify-between items-start mb-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-lg flex-shrink-0">🔒</div>
+                <div>
+                  <div class="text-sm font-bold">Bucket Protection</div>
+                  <div class="text-xs text-muted">Lock buckets so they can't be touched accidentally</div>
+                </div>
+              </div>
+              <button class="toggle-btn on w-11 h-6 bg-brand rounded-full relative border-0 cursor-pointer flex-shrink-0 transition-colors" onclick="this.classList.toggle('on');this.style.background=this.classList.contains('on')?'#0B3D2E':'#C8EDDA'">
+                <span class="toggle-knob absolute top-0.5 w-5 h-5 bg-white rounded-full" style="left:22px"></span>
+              </button>
+            </div>
+            <label class="block text-xs font-semibold text-ink mb-3">Choose buckets to protect</label>
+            <div class="flex flex-col gap-2 mb-4">
+              <label class="flex items-center gap-3 p-3 bg-mint rounded-[10px] cursor-pointer">
+                <input type="checkbox" checked class="w-4 h-4 accent-[#0B3D2E]">
+                <span class="text-sm flex-1">🏠 Rent</span>
+                <span class="text-[0.7rem] text-brand font-semibold">₦85,000</span>
+              </label>
+              <label class="flex items-center gap-3 p-3 bg-mint rounded-[10px] cursor-pointer">
+                <input type="checkbox" checked class="w-4 h-4 accent-[#0B3D2E]">
+                <span class="text-sm flex-1">💰 Savings</span>
+                <span class="text-[0.7rem] text-brand font-semibold">₦50,000</span>
+              </label>
+              <label class="flex items-center gap-3 p-3 bg-mint rounded-[10px] cursor-pointer">
+                <input type="checkbox" class="w-4 h-4 accent-[#0B3D2E]">
+                <span class="text-sm flex-1">🎯 Goals</span>
+                <span class="text-[0.7rem] text-brand font-semibold">₦25,000</span>
+              </label>
+              <label class="flex items-center gap-3 p-3 bg-mint rounded-[10px] cursor-pointer">
+                <input type="checkbox" class="w-4 h-4 accent-[#0B3D2E]">
+                <span class="text-sm flex-1">🍲 Food &amp; Groceries</span>
+                <span class="text-[0.7rem] text-brand font-semibold">₦37,500</span>
+              </label>
+            </div>
+            <button onclick="saveControl('ctrl-protect-msg')" class="w-full bg-brand hover:bg-brand-mid text-white font-semibold py-3 rounded-lg text-sm transition-all border-0 cursor-pointer">Save</button>
+            <div id="ctrl-protect-msg" class="hidden text-xs text-brand font-semibold text-center mt-3">✓ Protected buckets updated!</div>
+          </div>
+
+          <!-- Category Limits -->
+          <div class="bg-white border border-mint-border rounded-2xl p-6">
+            <div class="flex justify-between items-start mb-5">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-lg flex-shrink-0">🚫</div>
+                <div>
+                  <div class="text-sm font-bold">Category Limits</div>
+                  <div class="text-xs text-muted">Cap spending per category each month</div>
+                </div>
+              </div>
+              <button class="toggle-btn w-11 h-6 rounded-full relative border-0 cursor-pointer flex-shrink-0 transition-colors" style="background:#C8EDDA" onclick="this.classList.toggle('on');this.style.background=this.classList.contains('on')?'#0B3D2E':'#C8EDDA'">
+                <span class="toggle-knob absolute top-0.5 w-5 h-5 bg-white rounded-full" style="left:2px"></span>
+              </button>
+            </div>
+            <div class="flex flex-col gap-2 mb-4">
+              <div class="flex items-center gap-3 p-3 bg-mint rounded-[10px]">
+                <span class="text-sm flex-1">🍲 Food &amp; Groceries</span>
+                <div class="relative w-32">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs font-semibold">₦</span>
+                  <input type="number" value="37500" class="w-full pl-7 pr-2 py-1.5 border-[1.5px] border-mint-border rounded-lg text-xs font-sans text-ink bg-white outline-none focus:border-brand">
+                </div>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-mint rounded-[10px]">
+                <span class="text-sm flex-1">🚌 Transport</span>
+                <div class="relative w-32">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs font-semibold">₦</span>
+                  <input type="number" value="25000" class="w-full pl-7 pr-2 py-1.5 border-[1.5px] border-mint-border rounded-lg text-xs font-sans text-ink bg-white outline-none focus:border-brand">
+                </div>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-mint rounded-[10px]">
+                <span class="text-sm flex-1">🎉 Fun money</span>
+                <div class="relative w-32">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs font-semibold">₦</span>
+                  <input type="number" value="12500" class="w-full pl-7 pr-2 py-1.5 border-[1.5px] border-mint-border rounded-lg text-xs font-sans text-ink bg-white outline-none focus:border-brand">
+                </div>
+              </div>
+            </div>
+            <div class="bg-mint rounded-lg p-3 mb-4 text-xs text-muted leading-relaxed">
+              💡 Spending in a category is blocked once its monthly limit is reached.
+            </div>
+            <button onclick="saveControl('ctrl-limits-msg')" class="w-full bg-brand hover:bg-brand-mid text-white font-semibold py-3 rounded-lg text-sm transition-all border-0 cursor-pointer">Save</button>
+            <div id="ctrl-limits-msg" class="hidden text-xs text-brand font-semibold text-center mt-3">✓ Category limits updated!</div>
+          </div>
+
+        </div>
+      </div><!-- /dash-view-controls -->
+
     </main>
   </div>
 </div><!-- /page-dashboard -->
@@ -1037,6 +1534,170 @@ function toggleControlOption(el) {
   const isOn = el.style.borderColor === 'rgb(11, 61, 46)' || el.classList.contains('border-brand');
   el.style.borderColor = isOn ? '' : '#0B3D2E';
   el.style.background  = isOn ? '' : 'rgba(11,61,46,0.04)';
+}
+
+// ── DASHBOARD SUB-VIEW ROUTER ──
+function showDashView(viewId) {
+  document.querySelectorAll('.dash-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('dash-view-' + viewId).classList.add('active');
+  document.querySelectorAll('.dash-nav-item').forEach(item => {
+    if (item.dataset.view === viewId) {
+      item.style.background = 'rgba(255,255,255,0.1)';
+      item.style.color = 'white';
+    } else {
+      item.style.background = '';
+      item.style.color = 'rgba(255,255,255,0.65)';
+    }
+  });
+}
+
+// ── SPENDING CONTROLS ──
+function saveControl(msgId) {
+  const msg = document.getElementById(msgId);
+  msg.classList.remove('hidden');
+  setTimeout(() => msg.classList.add('hidden'), 2500);
+}
+
+function setDelayTab(btn) {
+  document.querySelectorAll('.delay-tab').forEach(t => {
+    t.style.background = 'transparent';
+    t.style.color = '#5A7368';
+  });
+  btn.style.background = '#0B3D2E';
+  btn.style.color = 'white';
+}
+
+// ── BUDGET ──
+function toggleAddBudgetForm() {
+  const form = document.getElementById('add-budget-form');
+  form.classList.toggle('hidden');
+  document.getElementById('budget-cat-err').textContent = '';
+  document.getElementById('budget-cat-select').value = '';
+  document.getElementById('budget-cat-amount').value = '';
+  document.getElementById('budget-custom-wrap').classList.add('hidden');
+}
+
+function handleBudgetCatSelect(sel) {
+  document.getElementById('budget-custom-wrap').classList.toggle('hidden', sel.value !== 'custom');
+}
+
+function addBudgetCategory() {
+  const sel    = document.getElementById('budget-cat-select');
+  const custom = document.getElementById('budget-cat-custom');
+  const amount = document.getElementById('budget-cat-amount');
+  document.getElementById('budget-cat-err').textContent = '';
+
+  let name = sel.value === 'custom' ? custom.value.trim() : sel.value;
+  if (!name) {
+    document.getElementById('budget-cat-err').textContent = 'Please choose or enter a category name.';
+    return;
+  }
+  if (!amount.value || parseInt(amount.value) <= 0) {
+    document.getElementById('budget-cat-err').textContent = 'Please enter a monthly budget amount.';
+    return;
+  }
+
+  const emoji  = name.match(/^\S+/)?.[0] ?? '📦';
+  const label  = name.replace(/^\S+\s*/, '') || name;
+  const budget = parseInt(amount.value);
+
+  const list = document.getElementById('budget-list');
+  const div  = document.createElement('div');
+  div.className = 'bg-white border border-mint-border rounded-2xl p-4';
+  div.innerHTML = `
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-10 h-10 rounded-[10px] bg-brand flex items-center justify-center text-base flex-shrink-0">${emoji}</div>
+      <div class="flex-1">
+        <div class="text-sm font-semibold">${label || name}</div>
+        <div class="text-[0.7rem] text-muted">Monthly limit</div>
+      </div>
+      <div class="text-right">
+        <div class="text-sm font-bold text-brand">₦0</div>
+        <div class="text-[0.65rem] text-muted">of ₦${budget.toLocaleString()}</div>
+      </div>
+    </div>
+    <div class="h-2 bg-mint-border rounded-full mb-1"><div class="h-2 bg-brand rounded-full" style="width:0%"></div></div>
+    <div class="flex justify-between text-[0.68rem] text-muted"><span>₦${budget.toLocaleString()} remaining</span><span>0% used</span></div>
+  `;
+  list.appendChild(div);
+
+  // Update summary numbers
+  const allocated = document.getElementById('budget-allocated');
+  const unalloc   = document.getElementById('budget-unallocated');
+  const bar       = document.getElementById('budget-bar');
+  const income    = 250000;
+  const prev      = parseInt(allocated.textContent.replace(/[₦,]/g, ''));
+  const newAlloc  = prev + budget;
+  const newUnalloc = Math.max(0, income - newAlloc);
+  allocated.textContent   = '₦' + newAlloc.toLocaleString();
+  unalloc.textContent     = '₦' + newUnalloc.toLocaleString();
+  bar.style.width = Math.min(100, Math.round(newAlloc / income * 100)) + '%';
+
+  toggleAddBudgetForm();
+}
+
+// ── BUCKET PERIOD TABS ──
+function setBucketPeriod(period, btn) {
+  document.querySelectorAll('.bucket-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.bucket-tab').forEach(t => {
+    t.style.background = 'transparent';
+    t.style.color = '#5A7368';
+  });
+  document.getElementById('bucket-panel-' + period).classList.remove('hidden');
+  btn.style.background = '#0B3D2E';
+  btn.style.color = 'white';
+}
+
+function saveBucketAllowance() {
+  const msg = document.getElementById('bucket-save-msg');
+  msg.classList.remove('hidden');
+  setTimeout(() => msg.classList.add('hidden'), 2500);
+}
+
+// ── GOALS ──
+function toggleAddGoalForm() {
+  document.getElementById('add-goal-form').classList.toggle('hidden');
+  document.getElementById('goal-name-err').textContent = '';
+  document.getElementById('goal-target-err').textContent = '';
+}
+
+function addGoal() {
+  const name   = document.getElementById('goal-name');
+  const target = document.getElementById('goal-target');
+  let ok = true;
+  document.getElementById('goal-name-err').textContent = '';
+  document.getElementById('goal-target-err').textContent = '';
+  if (!name.value.trim()) {
+    document.getElementById('goal-name-err').textContent = 'Please enter a goal name.';
+    ok = false;
+  }
+  if (!target.value || parseInt(target.value) <= 0) {
+    document.getElementById('goal-target-err').textContent = 'Please enter a valid target amount.';
+    ok = false;
+  }
+  if (!ok) return;
+
+  const list = document.getElementById('goals-list');
+  const div  = document.createElement('div');
+  div.className = 'p-3 bg-mint rounded-[10px]';
+  div.innerHTML = `
+    <div class="flex justify-between items-start mb-2">
+      <div>
+        <div class="text-sm font-semibold">🎯 ${name.value.trim()}</div>
+        <div class="text-[0.72rem] text-muted">Target: ₦${parseInt(target.value).toLocaleString()}</div>
+      </div>
+      <div class="text-right">
+        <div class="text-sm font-bold text-brand">₦0</div>
+        <div class="text-[0.65rem] text-muted">Just started</div>
+      </div>
+    </div>
+    <div class="h-2 bg-mint-border rounded-full"><div class="h-2 bg-brand rounded-full" style="width:0%"></div></div>
+  `;
+  list.appendChild(div);
+  name.value   = '';
+  target.value = '';
+  document.getElementById('goal-date').value = '';
+  document.getElementById('add-goal-form').classList.add('hidden');
 }
 
 // ── DATE ──
